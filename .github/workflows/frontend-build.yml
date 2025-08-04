@@ -1,0 +1,29 @@
+name: Build & Push Frontend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Docker login to ACR
+      run: echo "${{ secrets.ACR_PASSWORD }}" |
+           docker login cmm707acr.azurecr.io \
+             --username ${{ secrets.ACR_USERNAME }} --password-stdin
+
+    - name: Build & push image
+      run: |
+        TAG=$(date +%s)                      # simple unique tag
+        docker build -t cmm707acr.azurecr.io/frontend:$TAG .
+        docker push  cmm707acr.azurecr.io/frontend:$TAG
+        echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+    # (optional) write the tag to the Actions summary for copy-paste
+    - name: Show pushed tag
+      run: echo "Pushed: cmm707acr.azurecr.io/frontend:${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
